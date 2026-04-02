@@ -5,15 +5,16 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 import java.security.Key;
 import java.util.Date;
+import org.springframework.beans.factory.annotation.Value;
 
 @Component
 public class JwtUtils {
 
-    // Kunci rahasia untuk tanda tangan digital token (Minimal 32 karakter)
-    private final String jwtSecret = "ZakyZamagiSecretKeyProjectKeuangan2026";
-    
-    // Token berlaku selama 24 jam
-    private final int jwtExpirationMs = 86400000;
+    @Value("${app.jwt.secret}")
+    private String jwtSecret;
+
+    @Value("${app.jwt.expiration-ms}")
+    private int jwtExpirationMs;
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
