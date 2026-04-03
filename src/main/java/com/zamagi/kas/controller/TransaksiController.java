@@ -2,8 +2,10 @@ package com.zamagi.kas.controller;
 
 import com.zamagi.kas.model.Transaksi;
 import com.zamagi.kas.model.User;
+import com.zamagi.kas.model.UtangPiutang;
 import com.zamagi.kas.repository.TransaksiRepository;
 import com.zamagi.kas.repository.UserRepository;
+import com.zamagi.kas.repository.UtangPiutangRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,9 @@ public class TransaksiController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UtangPiutangRepository utangPiutangRepository;
 
     // Daftar jenis yang diizinkan
     private static final List<String> JENIS_VALID = List.of(
@@ -110,8 +115,42 @@ public class TransaksiController {
     @DeleteMapping("/{id}")
     @Transactional
     public ResponseEntity<?> hapusTransaksi(@PathVariable Long id) {
-        if (!transaksiRepository.existsById(id))
+        Transaksi transaksi = transaksiRepository.findById(id)
+                .orElse(null);
+        if (transaksi == null) {
             return ResponseEntity.badRequest().body("Data tidak ditemukan");
+        }
+
+        // Jika kategori "Bayar Utang" atau "Terima Piutang", kurangi sudah_bayar di utang_piutang
+        if ("Bayar Utang".equals(transaksi.getKategori()) || "Terima Piutang".equals(transaksi.getKategori())) {
+            // Ekstrak ID dari keterangan, misalnya "[ID:123]"
+            String keterangan = transaksi.getKeterangan();
+            if (keterangan != null) {
+                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\[ID:(\\d+)\\]");
+                java.util.regex.Matcher matcher = pattern.matcher(keterangan);
+                if (matcher.find()) {
+                    Long utangId = Long.parseLong(matcher.group(1));
+                    UtangPiutang utang = utangPiutangRepository.findById(utangId).orElse(null);
+                    if (utang != null) {
+                        // Kurangi sudah_bayar
+                        Long newSudahBayar = utang.getSudahDibayar() - transaksi.getNominal();
+                        if (newSudahBayar < 0) {
+                            newSudahBayar = 0L; // Tidak boleh negatif
+                        }
+                        utang.setSudahDibayar(newSudahBayar);
+
+                        // Update status
+                        if (utang.getSisaTagihan() <= 0) {
+                            utang.setStatus("Lunas");
+                        } else {
+                            utang.setStatus("Belum Lunas");
+                        }
+
+                        utangPiutangRepository.save(utang);
+                    }
+                }
+            }
+        }
 
         transaksiRepository.deleteById(id);
         return ResponseEntity.ok("Transaksi berhasil dihapus!");
