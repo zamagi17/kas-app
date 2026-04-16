@@ -5,10 +5,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "users") // Kita pakai nama 'users' (jamak) karena 'user' sering jadi kata cadangan (reserved word) di PostgreSQL
+@Table(name = "users")
 public class User {
 
-@Id
+    @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_seq")
     @SequenceGenerator(name = "user_seq", sequenceName = "users_id_seq", allocationSize = 1)
     private Long id;
@@ -19,6 +19,11 @@ public class User {
     @Column(nullable = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
+
+    // Menyimpan daftar aset dompet harian sebagai JSON string
+    // Contoh: ["BCA","SeaBank","Dompet Tunai"]
+    @Column(name = "dompet_harian", columnDefinition = "TEXT")
+    private String dompetHarian;
 
     // --- Constructor Kosong ---
     public User() {
@@ -33,4 +38,7 @@ public class User {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
+    public String getDompetHarian() { return dompetHarian; }
+    public void setDompetHarian(String dompetHarian) { this.dompetHarian = dompetHarian; }
 }

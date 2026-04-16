@@ -31,8 +31,10 @@ public class TransaksiController {
 
     // Daftar jenis yang diizinkan
     private static final List<String> JENIS_VALID = List.of(
-        "Pemasukan", "Pengeluaran",
-        "Rencana Pemasukan", "Rencana Pengeluaran"
+            "Pemasukan", "Pengeluaran",
+            "Rencana Pemasukan", "Rencana Pengeluaran",
+            "Utang Masuk", "Piutang Keluar",
+            "Bayar Utang", "Terima Piutang"
     );
 
     // Helper validasi, return pesan error atau null kalau valid
