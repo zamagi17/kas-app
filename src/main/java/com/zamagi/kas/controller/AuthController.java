@@ -26,63 +26,88 @@ public class AuthController {
     JwtUtils jwtUtils;
 
     // ── VALIDASI ─────────────────────────────────────────────────────────────
-
     private String validasiUser(String username, String password) {
-        if (username == null || username.isBlank())
+        if (username == null || username.isBlank()) {
             return "Username tidak boleh kosong";
-        if (username.length() < 3)
+        }
+        if (username.length() < 3) {
             return "Username minimal 3 karakter";
-        if (username.length() > 50)
+        }
+        if (username.length() > 50) {
             return "Username maksimal 50 karakter";
-        if (!username.matches("^[a-zA-Z0-9_.]+$"))
+        }
+        if (!username.matches("^[a-zA-Z0-9_.]+$")) {
             return "Username hanya boleh huruf, angka, titik, dan underscore";
-        if (password == null || password.isBlank())
+        }
+        if (password == null || password.isBlank()) {
             return "Password tidak boleh kosong";
-        if (password.length() < 8)
+        }
+        if (password.length() < 8) {
             return "Password minimal 8 karakter";
-        if (password.length() > 100)
+        }
+        if (password.length() > 100) {
             return "Password maksimal 100 karakter";
+        }
         // Validasi kekuatan password: harus ada huruf dan angka
-        if (!password.matches(".*[a-zA-Z].*") || !password.matches(".*[0-9].*"))
+        if (!password.matches(".*[a-zA-Z].*") || !password.matches(".*[0-9].*")) {
             return "Password harus mengandung huruf dan angka";
+        }
         return null;
     }
 
     // ── REGISTER ─────────────────────────────────────────────────────────────
-
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
+        // Validasi bawaan untuk username & password
         String error = validasiUser(user.getUsername(), user.getPassword());
-        if (error != null) return ResponseEntity.badRequest().body(error);
+        if (error != null) {
+            return ResponseEntity.badRequest().body(error);
+        }
 
-        if (userRepository.existsByUsername(user.getUsername()))
+        // 👇 Tambahan validasi untuk Nama Lengkap dan Email
+        if (user.getNamaLengkap() == null || user.getNamaLengkap().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body("Nama Lengkap tidak boleh kosong!");
+        }
+        if (user.getEmail() == null || !user.getEmail().contains("@")) {
+            return ResponseEntity.badRequest().body("Email tidak valid!");
+        }
+
+        // Cek apakah username sudah ada
+        if (userRepository.existsByUsername(user.getUsername())) {
             return ResponseEntity.badRequest().body("Username sudah terdaftar!");
+        }
 
+        // Enkripsi password
         user.setPassword(encoder.encode(user.getPassword()));
+
+        // Simpan ke database
+        // (namaLengkap dan email otomatis ikut tersimpan karena sudah ada di dalam object 'user')
         userRepository.save(user);
+
         return ResponseEntity.ok("User berhasil didaftarkan!");
     }
 
     // ── LOGIN ─────────────────────────────────────────────────────────────────
     // Sekarang return BOTH access token (15 menit) + refresh token (7 hari)
-
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody User user) {
-        if (user.getUsername() == null || user.getUsername().isBlank())
+        if (user.getUsername() == null || user.getUsername().isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Username wajib diisi"));
-        if (user.getPassword() == null || user.getPassword().isBlank())
+        }
+        if (user.getPassword() == null || user.getPassword().isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Password wajib diisi"));
+        }
 
         var userOptional = userRepository.findByUsername(user.getUsername());
         if (userOptional.isPresent()) {
             User u = userOptional.get();
             if (encoder.matches(user.getPassword(), u.getPassword())) {
-                String accessToken  = jwtUtils.generateAccessToken(u.getUsername());
+                String accessToken = jwtUtils.generateAccessToken(u.getUsername());
                 String refreshToken = jwtUtils.generateRefreshToken(u.getUsername());
                 return ResponseEntity.ok(Map.of(
-                        "token",        accessToken,   // nama "token" tetap sama agar frontend tidak perlu banyak ubah
+                        "token", accessToken, // nama "token" tetap sama agar frontend tidak perlu banyak ubah
                         "refreshToken", refreshToken,
-                        "username",     u.getUsername()
+                        "username", u.getUsername()
                 ));
             }
         }
@@ -95,7 +120,6 @@ public class AuthController {
     // POST /api/auth/refresh
     // Body: { "refreshToken": "eyJ..." }
     // Return: { "token": "eyJ...", "refreshToken": "eyJ..." }
-
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> body) {
         String refreshToken = body.get("refreshToken");
@@ -119,13 +143,13 @@ public class AuthController {
         }
 
         // Issue token baru
-        String newAccessToken  = jwtUtils.generateAccessToken(username);
+        String newAccessToken = jwtUtils.generateAccessToken(username);
         String newRefreshToken = jwtUtils.generateRefreshToken(username);
 
         return ResponseEntity.ok(Map.of(
-                "token",        newAccessToken,
+                "token", newAccessToken,
                 "refreshToken", newRefreshToken,
-                "username",     username
+                "username", username
         ));
     }
 }

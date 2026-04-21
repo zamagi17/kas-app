@@ -24,6 +24,15 @@ public class User {
     // Contoh: ["BCA","SeaBank","Dompet Tunai"]
     @Column(name = "dompet_harian", columnDefinition = "TEXT")
     private String dompetHarian;
+    
+    @Column(name = "nama_lengkap")
+    private String namaLengkap;
+
+    @Column(name = "email")
+    private String email;
+    
+    @Column(name = "nomor_hp")
+    private String nomorHp;
 
     // --- Constructor Kosong ---
     public User() {
@@ -41,4 +50,29 @@ public class User {
 
     public String getDompetHarian() { return dompetHarian; }
     public void setDompetHarian(String dompetHarian) { this.dompetHarian = dompetHarian; }
+
+    public String getNamaLengkap() {
+        return namaLengkap;
+    }
+
+    public void setNamaLengkap(String namaLengkap) {
+        this.namaLengkap = namaLengkap;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getNomorHp() {
+        return nomorHp;
+    }
+
+    public void setNomorHp(String nomorHp) {
+        this.nomorHp = nomorHp;
+    }
+    
 }
