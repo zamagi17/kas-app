@@ -3,6 +3,9 @@ package com.zamagi.kas.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
 @Table(name = "transaksi")
@@ -88,6 +91,13 @@ public class Transaksi {
     public void setAsetTerkait(String asetTerkait) {
         this.asetTerkait = asetTerkait;
     }
+    
+    @CreationTimestamp
+    @Column(updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
 
     // --- TAMBAHAN BARU UNTUK RELASI MULTI-USER ---
     @ManyToOne(fetch = FetchType.LAZY)
@@ -104,4 +114,21 @@ public class Transaksi {
     public void setUser(User user) {
         this.user = user;
     }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+    
 }
