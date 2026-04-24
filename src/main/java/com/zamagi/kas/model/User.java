@@ -1,6 +1,5 @@
 package com.zamagi.kas.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -27,38 +26,62 @@ public class User {
     // Contoh: ["BCA","SeaBank","Dompet Tunai"]
     @Column(name = "dompet_harian", columnDefinition = "TEXT")
     private String dompetHarian;
-    
+
     @Column(name = "nama_lengkap")
     private String namaLengkap;
 
     @Column(name = "email")
     private String email;
-    
+
     @Column(name = "nomor_hp")
     private String nomorHp;
-    
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @Column(name = "terima_laporan_bulanan", columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private Boolean terimaLaporanBulanan = false;
+
     // --- Constructor Kosong ---
     public User() {
     }
 
     // --- Getter dan Setter ---
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    public String getUsername() {
+        return username;
+    }
 
-    public String getDompetHarian() { return dompetHarian; }
-    public void setDompetHarian(String dompetHarian) { this.dompetHarian = dompetHarian; }
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getDompetHarian() {
+        return dompetHarian;
+    }
+
+    public void setDompetHarian(String dompetHarian) {
+        this.dompetHarian = dompetHarian;
+    }
 
     public String getNamaLengkap() {
         return namaLengkap;
@@ -99,5 +122,12 @@ public class User {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
-    
+
+    public Boolean getTerimaLaporanBulanan() {
+        return terimaLaporanBulanan;
+    }
+
+    public void setTerimaLaporanBulanan(Boolean terimaLaporanBulanan) {
+        this.terimaLaporanBulanan = terimaLaporanBulanan;
+    }
 }

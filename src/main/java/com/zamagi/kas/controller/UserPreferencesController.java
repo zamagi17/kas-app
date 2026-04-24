@@ -163,6 +163,7 @@ public class UserPreferencesController {
         profil.put("namaLengkap", user.getNamaLengkap());
         profil.put("email", user.getEmail());
         profil.put("nomorHp", user.getNomorHp());
+        profil.put("terimaLaporanBulanan", String.valueOf(user.getTerimaLaporanBulanan()));
 
         return ResponseEntity.ok(profil);
     }
@@ -187,25 +188,21 @@ public class UserPreferencesController {
         // 2. Validasi Email
         if (req.containsKey("email")) {
             String email = req.get("email");
-            // Boleh kosong (jika user mau menghapus email), tapi JIKA diisi, formatnya harus benar
             if (email != null && !email.trim().isEmpty()) {
-                // Regex standar untuk format email (user@domain.com)
                 String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
                 if (!email.matches(emailRegex)) {
                     return ResponseEntity.badRequest().body(Map.of("message", "Format email tidak valid"));
                 }
                 user.setEmail(email.trim().toLowerCase());
             } else {
-                user.setEmail(""); // Reset email jika dikirim kosong
+                user.setEmail("");
             }
         }
 
         // 3. Validasi Nomor HP
         if (req.containsKey("nomorHp")) {
             String nomorHp = req.get("nomorHp");
-            // Boleh kosong, tapi JIKA diisi, formatnya harus benar
             if (nomorHp != null && !nomorHp.trim().isEmpty()) {
-                // Regex: Boleh diawali +62, 62, atau 0, lalu diikuti 9-13 digit angka
                 String phoneRegex = "^(\\+62|62|0)[0-9]{9,13}$";
                 if (!nomorHp.matches(phoneRegex)) {
                     return ResponseEntity.badRequest().body(Map.of("message", "Format nomor HP tidak valid (harus angka, 10-14 digit)"));
@@ -216,10 +213,14 @@ public class UserPreferencesController {
             }
         }
 
-        // Simpan pembaruan ke database
-        userRepository.save(user);
+        if (req.containsKey("terimaLaporanBulanan")) {
+            String terimaLaporanStr = req.get("terimaLaporanBulanan");
+            if (terimaLaporanStr != null) {
+                user.setTerimaLaporanBulanan(Boolean.parseBoolean(terimaLaporanStr));
+            }
+        }
 
-        // Kirim response dalam bentuk JSON / Map agar mudah ditangkap frontend
+        userRepository.save(user);
         return ResponseEntity.ok(Map.of("message", "Profil berhasil diupdate"));
     }
 }
