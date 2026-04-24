@@ -14,6 +14,8 @@ public interface TransaksiRepository extends JpaRepository<Transaksi, Long> {
     // Spring Data JPA otomatis membuatkan fungsi save(), findAll(), deleteById(), dll!
     List<Transaksi> findByUserUsernameOrderByTanggalDescIdDesc(String username);
     
+    long countByUserUsername(String username);
+    
     // Hapus transaksi berdasarkan pola keterangan (untuk cascade delete saat UtangPiutang dihapus)
     @Modifying
     @Query("DELETE FROM Transaksi t WHERE t.keterangan LIKE CONCAT('%', ?1, '%')")
@@ -32,7 +34,7 @@ public interface TransaksiRepository extends JpaRepository<Transaksi, Long> {
     @Query("SELECT COALESCE(SUM(CASE WHEN t.jenis = 'Pemasukan' THEN t.nominal ELSE -t.nominal END), 0) " +
            "FROM Transaksi t WHERE t.user.username = :username AND t.tanggal < :startDate AND t.jenis IN ('Pemasukan', 'Pengeluaran')")
     Long calculateSaldoAwal(@Param("username") String username, @Param("startDate") LocalDate startDate);
-
+    
     /**
      * Menghitung Total Saldo Portofolio per Aset/Dompet (sejak awal sampai akhir bulan yang difilter).
      * Memperhitungkan efek dari utang masuk, bayar utang, piutang keluar, dan terima piutang.
@@ -42,4 +44,5 @@ public interface TransaksiRepository extends JpaRepository<Transaksi, Long> {
            "FROM Transaksi t WHERE t.user.username = :username AND t.tanggal <= :endDate " +
            "GROUP BY t.sumberDana")
     List<Object[]> getPortofolioSaldo(@Param("username") String username, @Param("endDate") LocalDate endDate);
+   
 }

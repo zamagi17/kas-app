@@ -125,10 +125,18 @@ public class TransaksiController {
             LocalDate startDate = yearMonth.atDay(1);
             LocalDate endDate = yearMonth.atEndOfMonth();
 
-            List<Transaksi> transaksiList = transaksiRepository
+            List<Transaksi> transaksiBulanIni = transaksiRepository
                     .findByUserUsernameAndTanggalBetweenOrderByTanggalDescIdDesc(username, startDate, endDate);
 
-            return ResponseEntity.ok(transaksiList);
+            long totalTransaksiKeseluruhan = transaksiRepository.countByUserUsername(username);
+
+            boolean isNewUser = totalTransaksiKeseluruhan <= 10;
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("data", transaksiBulanIni);
+            response.put("showGuide", isNewUser);
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Format bulan tidak valid. Gunakan format YYYY-MM");
         }
