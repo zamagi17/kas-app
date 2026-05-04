@@ -1,6 +1,7 @@
 package com.zamagi.kas.service;
 
 import com.zamagi.kas.dto.LaporanSummary;
+import com.zamagi.kas.model.Transaksi;
 import com.zamagi.kas.model.User;
 import com.zamagi.kas.repository.TransaksiRepository;
 import com.zamagi.kas.repository.UserRepository;
@@ -12,6 +13,7 @@ import jakarta.mail.internet.MimeMessage;
 import org.springframework.mail.javamail.MimeMessageHelper;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -34,6 +36,9 @@ public class ReportScheduler {
 
     @Autowired
     private PdfReportService pdfReportService;
+
+    @Autowired
+    private TransaksiRepository transaksiRepository;
 
     // Cron: Detik Menit Jam Hari-dalam-Bulan Bulan Hari-dalam-Minggu
     // "0 0 7 1 * *" berarti setiap tanggal 1 jam 07:00 pagi
@@ -72,13 +77,36 @@ public class ReportScheduler {
             LocalDate lastMonth = LocalDate.now().minusMonths(1);
             String bulan = lastMonth.getYear() + "-" + String.format("%02d", lastMonth.getMonthValue());
 
-            // Generate PDF
-            byte[] pdfBytes = pdfReportService.generateLaporanBulananPdf(user, bulan);
+            YearMonth yearMonth = YearMonth.parse(bulan);
+            LocalDate startDate = yearMonth.atDay(1);
+            LocalDate endDate = yearMonth.atEndOfMonth();
 
-            // Ambil summary
-            LaporanSummary summary = pdfReportService.getSummary(user, bulan);
-            long totalMasuk = summary.getTotalMasuk();
-            long totalKeluar = summary.getTotalKeluar();
+            List<Transaksi> historyBulanLalu = transaksiRepository
+                    .findByUserUsernameAndTanggalBetweenOrderByTanggalDescIdDesc(user.getUsername(), startDate, endDate);
+
+            long totalMasuk = 0;
+            long totalKeluar = 0;
+
+            for (Transaksi row : historyBulanLalu) {
+                long nom = row.getNominal() != null ? row.getNominal() : 0;
+                String jenis = row.getJenis() != null ? row.getJenis() : "";
+                String kategori = row.getKategori() != null ? row.getKategori() : "";
+                String keterangan = row.getKeterangan() != null ? row.getKeterangan() : "";
+
+                boolean isTransferOrMutasi = "Transfer Aset (Auto)".equals(kategori)
+                        && (keterangan.contains("Mutasi Masuk") || keterangan.contains("Mutasi Keluar"));
+
+                boolean isCashIn = "Pemasukan".equals(jenis) || "Utang Masuk".equals(jenis) || "Terima Piutang".equals(jenis);
+                boolean isCashOut = "Pengeluaran".equals(jenis) || "Piutang Keluar".equals(jenis) || "Bayar Utang".equals(jenis);
+
+                if (isCashIn && !isTransferOrMutasi) {
+                    totalMasuk += nom;
+                } else if (isCashOut && !isTransferOrMutasi) {
+                    totalKeluar += nom;
+                }
+            }
+
+            byte[] pdfBytes = pdfReportService.generateLaporanBulananPdf(user, bulan);
 
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
